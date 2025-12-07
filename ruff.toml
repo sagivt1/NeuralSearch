@@ -1,0 +1,9 @@
+target-version = "py39"
+line-length = 88
+
+[lint]
+select = ["F", "E", "W", "I", "B"]
+ignore = []
+
+[format]
+quote-style = "double"
