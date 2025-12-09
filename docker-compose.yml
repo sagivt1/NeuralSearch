@@ -1,0 +1,36 @@
+services:
+  db:
+
+    # Use a PostgreSQL image with the pgvector extension pre-installed.
+    # Enables vector similarity search capabilities for AI/ML features.
+    image: pgvector/pgvector:pg16
+    
+    # Expose the PostgreSQL port to the host machine.
+    # Allows local applications or database tools to connect directly.
+    ports:
+      - "5432:5432"
+    
+    # Load database credentials and name from a .env file.
+    # Avoids hardcoding sensitive information in version control.
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    
+    # Persist database contents to a named volume.
+    # Ensures data survives container restarts and removals.
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    
+    # Defines a command to check if the database is ready for connections.
+    # Crucial for controlling startup order in multi-service applications.
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+# Declares the named volume for Docker to manage.
+# This decouples the data's lifecycle from the container's lifecycle.
+volumes:
+  postgres_data:
