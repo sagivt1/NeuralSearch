@@ -9,6 +9,7 @@ dependencies = [
     "fastapi>=0.124.0",
     "pydantic-settings>=2.12.0",
     "python-dotenv>=1.2.1",
+    "sentence-transformers>=5.1.2",
     "sqlmodel>=0.0.27",
     "uvicorn[standard]>=0.38.0",
 ]
