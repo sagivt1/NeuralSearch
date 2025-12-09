@@ -1,5 +1,5 @@
 import pytest
-from src.neural import EmbeddingModel, embedder
+from src.neural import EmbeddingModel
 
 
 # The expected dimension of the embedding model being used.
@@ -16,7 +16,7 @@ def embedder() -> EmbeddingModel:
     return EmbeddingModel()
 
 
-def test_embedding_model_is_singleton():
+def test_embedding_model_is_singleton(embedder: EmbeddingModel):
     """
     Verifies that the EmbeddingModel correctly implements the singleton pattern.
     """
