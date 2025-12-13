@@ -1,11 +1,11 @@
 from src.worker import celery_app
-from src.neural import embedder
 
 @celery_app.task(name="process_document")
 def process_document(filename: str, text: str):
     """
     Take text and covert it for vector then print the vector
     """
+    from src.neural import embedder
 
     print(f"Processing file: {filename}")
 
