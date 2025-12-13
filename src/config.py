@@ -7,6 +7,7 @@ class Settings(BaseSettings):
     ENVIRONMENT: str = "development"
     DEBUG: bool = True
     DATABASE_URL: str
+    REDIS_URL: str = "redis://localhost:6379/0"
     
     # Load settings from a .env file.
     # `extra="ignore"` prevents errors if extra env vars are present.
