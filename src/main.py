@@ -1,5 +1,6 @@
 from contextlib import asynccontextmanager
 from fastapi import FastAPI, UploadFile, File, HTTPException, Depends
+from fastapi.concurrency import run_in_threadpool
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
 
@@ -8,7 +9,8 @@ from src.database import init_db, get_session
 from src.models import Document
 from src.schemas import DocumentResponse
 from src.tasks import process_document
-
+from src.schemas import SearchResponse
+from src.neural import embedder
 
 # Manages application startup and shutdown events.
 @asynccontextmanager
@@ -44,7 +46,8 @@ async def upload_document(
     session: AsyncSession = Depends(get_session),
 ):
     """
-
+    Accepts a file upload, saves its content to the database,
+    and triggers a background task to generate its vector embedding.
     """
 
     try:
@@ -60,9 +63,8 @@ async def upload_document(
     await session.commit()
     await session.refresh(new_doc)
 
-    # Trigger Background task 
-    # Pass the ID so the worker know whice DB row to update
-    process_document.delay(new_doc.filename, new_doc.content)
+    # Offload the CPU-intensive embedding generation to a background worker.
+    process_document.delay(new_doc.id)
 
     return new_doc
 
@@ -72,4 +74,25 @@ async def list_documents(session: AsyncSession = Depends(get_session)):
     documents = result.scalars().all()
     return documents
 
+@app.post("/search", response_model=list[SearchResponse])
+async def search_documents(query: str, session: AsyncSession = Depends(get_session)):
+    """
+    Searches for documents semantically similar to the query.
+    1. Converts the query text into a vector embedding.
+    2. Performs a nearest neighbor search in the database.
+    """
 
+    # Embedding generation is CPU-bound, run in a thread pool to avoid blocking the event loop.
+    query_vector = await run_in_threadpool(embedder.embed, query)
+
+
+    # Use the L2 distance operator (<->) from pgvector to find the nearest neighbors.
+    # The `l2_distance` method is a SQLAlchemy-friendly wrapper for this operator.
+    statement = select(Document).order_by(Document.embedding.l2_distance(query_vector)).limit(5)
+
+    result = await session.execute(statement)
+    documents = result.scalars().all()
+
+    return documents
+
+    

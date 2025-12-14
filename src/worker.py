@@ -7,10 +7,12 @@ celery_app = Celery (
     "neuralsearch",
     broker=setting.REDIS_URL,
     backend=setting.REDIS_URL,
-    include=["src.tasks"] # this celary tell where to find the code
+    # Auto-discover tasks from the specified module.
+    include=["src.tasks"]
 )
 
-# saftey setting
+# Configuration to enhance security and interoperability.
+# Standardizes on the JSON serializer, which is safer than the default (pickle).
 celery_app.conf.update(
     task_serializer="json",
     result_serializer="json",

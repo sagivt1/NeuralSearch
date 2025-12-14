@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
 from sqlmodel import Field, SQLModel
 from sqlalchemy import Column, DateTime
+from pgvector.sqlalchemy import Vector
 
 class Document(SQLModel, table=True):
 
@@ -14,3 +15,6 @@ class Document(SQLModel, table=True):
         sa_column=Column(DateTime(timezone=True)),
         default_factory=lambda: datetime.now(timezone.utc),    
     )
+    # Stores the 384-dimensional vector embedding from the 'all-MiniLM-L6-v2' model.
+    # The `Vector` type is provided by the pgvector extension.
+    embedding: list[float] | None = Field(default=None, sa_column=Column(Vector(384)))

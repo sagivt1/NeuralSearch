@@ -1,5 +1,6 @@
 from functools import lru_cache
 from pydantic_settings import BaseSettings, SettingsConfigDict
+import os
 
 
 class Settings(BaseSettings):
@@ -9,12 +10,15 @@ class Settings(BaseSettings):
     DATABASE_URL: str
     REDIS_URL: str = "redis://localhost:6379/0"
     
-    # Load settings from a .env file.
-    # `extra="ignore"` prevents errors if extra env vars are present.
-    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
+    # Pydantic settings configuration.
+    # Loads from a .env file and ignores extra environment variables.
+    model_config = SettingsConfigDict(
+        env_file=os.path.join(os.path.dirname(os.path.dirname(__file__)), ".env"),
+        extra="ignore",
+        env_file_encoding="utf-8"
+    )
 
-# Cache the settings object to avoid re-reading the .env file on every call.
-# This is a performance optimization.
+# Cache settings to avoid re-reading the .env file on every request.
 @lru_cache()
 def get_settings():
     return Settings()
