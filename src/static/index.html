@@ -6,6 +6,7 @@
     <title>NeuralSearch</title>
     <style>
         :root {
+            /* Centralized design tokens for consistent theming. */
             --primary-blue: #007aff;
             --light-gray: #f2f2f7;
             --border-color: #e5e5ea;
@@ -19,6 +20,7 @@
         }
 
         body {
+            /* Use system fonts for a native, "Apple-esque" feel. */
             font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
             margin: 0;
             background-color: var(--light-gray);
@@ -108,6 +110,7 @@
         }
 
         #file-input {
+            /* Hide the default, un-stylable file input. It's triggered by JS. */
             display: none;
         }
 
@@ -169,6 +172,7 @@
             padding: 1rem 1.5rem;
             border-radius: var(--border-radius-small);
             box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+            /* Start hidden, ready for a fade-in transition. */
             opacity: 0;
             visibility: hidden;
             transition: opacity 0.3s, visibility 0.3s;
@@ -188,6 +192,7 @@
             background-color: #ff3b30;
         }
 
+        /* On smaller screens, stack the search bar and button for better usability. */
         @media (max-width: 600px) {
             body {
                 padding: 1rem;
@@ -239,7 +244,8 @@
 
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            const API_BASE_URL = '';
+            // Define the backend API endpoint for local development.
+            const API_BASE_URL = 'http://localhost:8000';
 
             const searchInput = document.getElementById('search-input');
             const searchButton = document.getElementById('search-button');
@@ -251,6 +257,7 @@
             const showToast = (message, type = 'success') => {
                 toast.textContent = message;
                 toast.className = `toast show ${type}`;
+                // Auto-dismiss the toast after 3 seconds.
                 setTimeout(() => {
                     toast.className = 'toast';
                 }, 3000);
@@ -258,6 +265,7 @@
 
             const setLoadingState = (isLoading, message = 'Searching...') => {
                 resultsContainer.innerHTML = '';
+                // Show a spinner and a message during async operations.
                 if (isLoading) {
                     const statusMessage = document.createElement('div');
                     statusMessage.className = 'status-message';
@@ -297,6 +305,11 @@
                 results.forEach(result => {
                     const card = document.createElement('div');
                     card.className = 'result-card';
+
+                    // SECURITY: Using innerHTML can be risky if content contains malicious scripts (XSS).
+                    // Since 'filename' and 'content' come from uploaded files, they are untrusted.
+                    // A safer approach is to create and append nodes with `textContent`.
+                    // e.g., const h3 = document.createElement('h3'); h3.textContent = result.filename; card.appendChild(h3);
                     card.innerHTML = `
                         <h3>${result.filename}</h3>
                         <p>${result.content}</p>
@@ -311,6 +324,7 @@
 
                 setLoadingState(true, 'Uploading...');
 
+                // Use FormData to package the file for a multipart/form-data request.
                 const formData = new FormData();
                 formData.append('file', file);
 
@@ -329,7 +343,8 @@
                     showToast('File upload failed.', 'error');
                 } finally {
                     setLoadingState(false);
-                    fileInput.value = ''; // Reset file input
+                    // Reset the input so the 'change' event fires even if the same file is selected again.
+                    fileInput.value = '';
                 }
             };
 
@@ -338,7 +353,9 @@
                 if (e.key === 'Enter') handleSearch();
             });
 
+            // Trigger the hidden file input when the styled button is clicked.
             uploadButton.addEventListener('click', () => fileInput.click());
+            // Start the upload process as soon as a file is selected.
             fileInput.addEventListener('change', handleUpload);
         });
     </script>

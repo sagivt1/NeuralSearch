@@ -32,8 +32,65 @@ services:
 
   redis:
     image: redis:alpine
+    # Use a lightweight Alpine image for Redis.
+    # Acts as a message broker for Celery and for caching.
     ports:
       - "6379:6379"
+    # Check if the Redis server is ready to accept commands.
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    # Build the image from the Dockerfile in the current directory.
+    build: .
+    
+    ports:
+      - "8000:8000"
+    
+    # Pass connection strings to the application.
+    # Docker Compose provides DNS resolution using service names (e.g., 'db', 'redis').
+    environment:
+      - DATABASE_URL=postgresql+asyncpg://postgres:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      - REDIS_URL=redis://redis:6379/0
+
+    volumes:
+      - .:/app
+
+    # Control startup order. The API will only start after its dependencies are healthy.
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    
+    # Override the Dockerfile's CMD for local development.
+    # Enables hot-reloading on code changes.
+    command: uv run uvicorn src.main:app --host 0.0.0.0 --port 8000 --reload
+
+  worker:
+    # Reuse the same Docker image built for the API service.
+    build: .
+    
+    # The worker needs the same environment variables to connect to services.
+    environment:
+      - DATABASE_URL=postgresql+psycopg://postgres:${POSTGRES_PASSWORD}@db:5432/${POSTGRES_DB}
+      - REDIS_URL=redis://redis:6379/0
+
+    volumes:
+      - .:/app
+
+    # Ensure the worker also waits for dependencies to be healthy before starting.
+    depends_on:
+      db:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+
+    # Start the Celery worker to process background tasks from the Redis queue.
+    command: uv run celery -A src.worker.celery_app worker --loglevel=info
 
 # Declares the named volume for Docker to manage.
 # This decouples the data's lifecycle from the container's lifecycle.
