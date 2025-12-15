@@ -3,7 +3,6 @@ from fastapi import FastAPI, UploadFile, File, HTTPException, Depends
 from fastapi.concurrency import run_in_threadpool
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy import select
-from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from fastapi.middleware.cors import CORSMiddleware
 import os
@@ -47,13 +46,6 @@ def create_app() -> FastAPI:
     return app
 
 app = create_app()
-
-static_dir = os.path.join(os.path.dirname(__file__), "static")
-app.mount("/static", StaticFiles(directory=static_dir), name="static")
-
-@app.get("/")
-async def read_root():
-    return FileResponse(os.path.join(static_dir, "index.html"))
 
 @app.get("/health")
 async def health_check():
