@@ -68,7 +68,6 @@ async def upload_document(
         raise HTTPException(status_code=400, detail="Invalid file format. Please upload a UTF-8 text file.")
     
 
-    # save to database
     new_doc = Document(filename=file.filename, content=text_content)
     session.add(new_doc)
     await session.commit()
